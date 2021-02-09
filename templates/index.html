@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<body>
+<link rel="stylesheet" href="/static/css/bootstrap.css">
+<link rel="stylesheet" href="/static/css/bootstrap.min.css">
+<h1>Account Management</h1>
+<div class="container">
+  <div class="row">
+  
+  <div class="col-lg-6 col-md-6">
+   <div class="form-group">
+      <label for="exampleSelect1">Customer id</label>
+      <select class="form-control" id="exampleSelect1">
+    </select>
+    </div>
+    </div>
+        <div class="col-lg-4 col-md-4">
+	<button id="init_button" type="button" style="margin-top: 30px" class="btn btn-primary">Fetch account</button>
+        </div>
+       </div>
+   <div class="row">
+   <div class="col-lg-6 col-md-6" id="details_class">
+   </div>
+   </div>
+   <div class="row">
+   <div class="col-lg-6 col-md-8" id="more_details_class">
+   </div>
+   </div> 
+<script src="/static/js/jquery.min.js"></script> 
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script>
+ let token=""
+ let enable_counter=0
+ function enabled(){
+  enable_counter=enable_counter+1;
+  if(enable_counter%2==0){
+        is_disabled=true
+  	enable_counter=0
+        $(`#more_details_class`).empty()
+  }
+  else{is_disabled=false
+  $.ajax({url: "/api/v1/wallet",headers: {
+        'token':token
+    },data:{"is_disabled":is_disabled},success: function(result){
+  result=JSON.parse(result)
+  $(`#more_details_class`).append(`<b> id : ${result.data[0][0]} </b><br>`)
+  $(`#more_details_class`).append(`<b> owned_by : ${result.data[0][1]} </b><br>`)
+  $(`#more_details_class`).append(`<b> status : ${result.data[0][2]} </b><br>`)
+  $(`#more_details_class`).append(`<b> enabled at : ${result.data[0][3]} </b><br>`)
+  $(`#more_details_class`).append(`<label id="label"><b> balance : ${result.data[0][4]} </b></label>`)
+$(`#more_details_class`).append(`<h3> Transaction </h3>`)
+$(`#more_details_class`).append(`<div class="row">
+
+  <div class="col-lg-6 col-md-6">
+  <div class="form-group">
+  <label class="col-form-label" for="inputDefault">Amount</label>
+  <input type="text" class="form-control" placeholder="Enter amount" id="inputDefault">
+</div>
+  <div class="row">
+   <div class="col-lg-6 col-md-6">
+   <button id="deposit_amount" onclick=deposit_amount() type="button" class="btn btn-primary">Deposit</button></div>
+ <div class="col-lg-6 col-md-6"><button id="withdraw_amount" type="button" onclick=withdraw_amount() class="btn btn-primary">Withdraw</button></div></div>`)
+
+
+  }});
+}
+
+  
+};
+ function deposit_amount (){
+   
+  $.ajax({url: "/api/v1/wallet/deposits", data:{"amount":$(`#inputDefault`).val()},headers: {
+        'token':token
+    },type:'POST',success: function(result){
+    result=JSON.parse(result)
+    $(`#label`).empty()
+    $(`#inputDefault`).val('')
+    $(`#label`).append(`<b> balance : ${result.data.balance} </b>`)
+    swal({
+  text: "Done!",
+});
+  }});
+}
+ function withdraw_amount(){
+    
+  $.ajax({url: "/api/v1/wallet/withdrawals", data:{"amount":$(`#inputDefault`).val()},headers: {
+        'token':token
+    },type:'POST',success: function(result){
+  result=JSON.parse(result)
+  if(result.status=="success")
+  {
+        $(`#label`).empty()
+        $(`#inputDefault`).val('')
+    $(`#label`).append(`<b> balance : ${result.data.balance} </b>`)
+	swal({
+  text: "Done!",
+});
+  
+  }
+  else
+  {
+        $(`#inputDefault`).val('')
+	swal({
+  text: "Insufficient funds!",
+});
+  }
+  }});
+}
+$( document ).ready(function() {
+  
+   
+   
+   $.ajax({url: "/api/v1/fetch_accounts", success: function(result){
+    result=JSON.parse(result)    
+for (i = 0; i < result.length; i++) {
+  $('#exampleSelect1').append(`<option>${result[i]}</option>`);
+} 
+
+    
+  }});
+    console.log( "ready!" );
+    $("#init_button").click(function(){
+    enable_counter=0
+    $(`#details_class`).empty()
+  $.ajax({url: "/api/v1/init", data:{"customed_xid":$(`#exampleSelect1`).val()},type:'POST',success: function(result){
+    result=JSON.parse(result)
+    token=result.data.token
+    $(`#details_class`).append(`<button id="enable_button" type="button" onclick=enabled() class="btn btn-primary btn-sm">Enable/Disable</button>`)
+
+  }});
+});
+  
+});
+
+
+</script>
+</div>
+</body>
+</html> 
